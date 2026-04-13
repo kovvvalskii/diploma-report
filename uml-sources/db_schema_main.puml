@@ -1,0 +1,87 @@
+@startuml class_diagram
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+' linetype ortho делает линии прямыми, под прямым углом — идеально для схем БД
+
+enum "Тип транспорта" as TransportType {
+  АВТОМОБИЛЬ
+  ПЕШЕХОД
+  ВЕЛОСИПЕД
+  ОБЩЕСТВЕННЫЙ_ТРАНСПОРТ
+  АВИАПЕРЕЛЕТ
+}
+
+enum "Уровень угрозы" as EventSeverity {
+  ИНФОРМАЦИЯ
+  ПРЕДУПРЕЖДЕНИЕ
+  КРИТИЧЕСКАЯ_УГРОЗА
+}
+
+class "Пользователь" as User {
+  + UUID id [PK]
+  + String username
+  + String email
+  + Boolean share_live_location
+}
+
+class "Локация пользователя" as UserLocation {
+  + UUID id [PK]
+  + UUID user_id [FK]
+  + Geometry(Point, 4326) current_position
+  + Float speed_kmh
+  + Timestamp recorded_at
+}
+
+class "Маршрут" as Route {
+  + UUID id [PK]
+  + UUID user_id [FK]
+  + TransportType transport_type
+  + Geometry path
+  + Timestamp estimated_departure
+  + Timestamp estimated_arrival
+  + Boolean is_active
+}
+
+class "Событие" as Event {
+  + UUID id [PK]
+  + Integer source_id [FK]
+  + Integer type_id [FK]
+  + String external_id
+  + String title
+  + EventSeverity severity
+  + Geometry epicenter
+  + Geometry impact_area
+  + Timestamp created_at
+  + Timestamp updated_at
+  + Timestamp expires_at
+  + Integer update_count
+}
+
+class "Упоминание" as Mention {
+  + UUID id [PK]
+  + UUID event_id [FK]
+  + String url
+  + String text
+  + Timestamp published_at
+}
+
+class "Источник" as Source {
+  + Integer id [PK]
+  + String name
+  + String base_url
+}
+
+class "Тип события" as EventType {
+  + Integer id [PK]
+  + String name
+  + Float default_radius_km
+}
+
+' Связи с подписанными ролями и направлением чтения
+User "1" *-- "0..*" Route : планирует >
+User "1" *-- "0..*" UserLocation : отслеживает >
+Event "*" --> "1" Source : получено из >
+Event "*" --> "1" EventType : классифицируется как >
+Event "1" *-- "0..*" Mention : описывается в >
+
+@enduml
