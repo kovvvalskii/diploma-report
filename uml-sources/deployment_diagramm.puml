@@ -1,0 +1,53 @@
+@startuml deployment_diagramm
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Verdana"
+skinparam defaultFontSize 12
+
+node "User Smartphone" {
+    component [Mobile App (React Native / WebView)] as Mobile
+}
+
+node "Cloud Infrastructure / Server" {
+    
+    node "Docker Compose / K8s Cluster" {
+        
+        node "Web Tier" {
+            component [Nginx (Reverse Proxy)] as Nginx
+        }
+        
+        node "Application Tier (Java)" {
+            component [Core Service (Spring Boot)] as Core
+        }
+        
+        node "AI Tier (Python)" {
+            component [Fetcher Service] as Fetcher
+            component [Analyzer Service (FastAPI)] as Analyzer
+            component [Ollama (Local LLM Runtime)] as Ollama
+        }
+        
+        node "Message Broker" {
+            component [RabbitMQ] as RMQ
+        }
+        
+        node "Database Tier" {
+            database "PostgreSQL + PostGIS" as DB
+        }
+    }
+}
+
+cloud "External Sources" {
+    [GDELT Project] as GDELT
+    [News Media / APIs] as News
+}
+
+Mobile -- Nginx : HTTPS / REST
+Nginx -- Core : Reverse Proxy
+Core -- DB : JDBC / Spatial
+Core -- RMQ : AMQP
+Fetcher -- RMQ : AMQP
+Fetcher -- GDELT : HTTP
+Analyzer -- RMQ : AMQP
+Analyzer -- Ollama : Local API
+Analyzer -- News : Scraping
+@enduml
