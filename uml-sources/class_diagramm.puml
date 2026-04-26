@@ -1,4 +1,4 @@
-@startuml class_diagram
+@startuml class_diagramm
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 ' linetype ortho делает линии прямыми, под прямым углом — идеально для схем БД

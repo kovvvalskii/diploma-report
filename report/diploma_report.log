@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.4.12)  22 APR 2026 08:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.4.12)  26 APR 2026 15:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1471,12 +1471,12 @@ l.106   \restoregeometry
 \openout2 = `sections/intro.aux'.
 
 
-(./sections/intro.tex) [8
+(./sections/intro.tex [8
 
 
 
 
-]
+] [9] [10]) [11]
 \openout2 = `sections/sec_analysis.aux'.
 
  (./sections/sec_analysis.tex
@@ -1491,13 +1491,13 @@ Underfull \hbox (badness 4001) in paragraph at lines 8--9
 рограммно-
  []
 
-[9
+[12
 
 
 
 
-] [10] [11]
-<picture/international-sos.png, id=234, 491.33563pt x 289.58188pt>
+] [13] [14]
+<picture/international-sos.png, id=247, 491.33563pt x 289.58188pt>
 File: picture/international-sos.png Graphic file (type png)
 <use picture/international-sos.png>
 Package pdftex.def Info: picture/international-sos.png  used on input line 108.
@@ -1509,7 +1509,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 115--116
 ро-ва-ния
  []
 
-<picture/safeture.png, id=236, 963.6pt x 540.0175pt>
+<picture/safeture.png, id=249, 963.6pt x 540.0175pt>
 File: picture/safeture.png Graphic file (type png)
 <use picture/safeture.png>
 Package pdftex.def Info: picture/safeture.png  used on input line 128.
@@ -1517,8 +1517,8 @@ Package pdftex.def Info: picture/safeture.png  used on input line 128.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[12 <./picture/international-sos.png>]
-<picture/crisis.png, id=245, 1180.41pt x 664.4825pt>
+[15 <./picture/international-sos.png>]
+<picture/crisis.png, id=257, 1180.41pt x 664.4825pt>
 File: picture/crisis.png Graphic file (type png)
 <use picture/crisis.png>
 Package pdftex.def Info: picture/crisis.png  used on input line 148.
@@ -1557,41 +1557,43 @@ Overfull \hbox (13.8325pt too wide) in paragraph at lines 170--181
  [][] 
  []
 
-[13 <./picture/safeture.png>] [14 <./picture/crisis.png>] [15] [16]) [17]
+[16 <./picture/safeture.png>] [17 <./picture/crisis.png>] [18] [19]) [20]
 \openout2 = `sections/sec_designing.aux'.
 
 
 (./sections/sec_designing.tex
-<picture/use_case_diagram.png, id=294, 898.35625pt x 591.20876pt>
-File: picture/use_case_diagram.png Graphic file (type png)
-<use picture/use_case_diagram.png>
-Package pdftex.def Info: picture/use_case_diagram.png  used on input line 21.
-(pdftex.def)             Requested size: 469.47049pt x 308.95488pt.
+<picture/diagramm/use_case_diagramm.png, id=308, 897.3525pt x 544.0325pt>
+File: picture/diagramm/use_case_diagramm.png Graphic file (type png)
+<use picture/diagramm/use_case_diagramm.png>
+Package pdftex.def Info: picture/diagramm/use_case_diagramm.png  used on input 
+line 21.
+(pdftex.def)             Requested size: 469.47049pt x 284.61688pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[18
+[21
 
 
 
 
 ]
-<picture/components_diagramm.png, id=301, 786.94pt x 693.59125pt>
-File: picture/components_diagramm.png Graphic file (type png)
-<use picture/components_diagramm.png>
-Package pdftex.def Info: picture/components_diagramm.png  used on input line 32
-.
-(pdftex.def)             Requested size: 469.47049pt x 413.7767pt.
+<picture/diagramm/components_diagramm.png, id=314, 786.94pt x 695.59875pt>
+File: picture/diagramm/components_diagramm.png Graphic file (type png)
+<use picture/diagramm/components_diagramm.png>
+Package pdftex.def Info: picture/diagramm/components_diagramm.png  used on inpu
+t line 32.
+(pdftex.def)             Requested size: 469.47049pt x 414.97433pt.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[19 <./picture/use_case_diagram.png>]
-<picture/analyzer_flow.png, id=311, 839.135pt x 621.32124pt>
-File: picture/analyzer_flow.png Graphic file (type png)
-<use picture/analyzer_flow.png>
-Package pdftex.def Info: picture/analyzer_flow.png  used on input line 55.
+[22 <./picture/diagramm/use_case_diagramm.png>]
+<picture/diagramm/analyzer_flow.png, id=323, 839.135pt x 621.32124pt>
+File: picture/diagramm/analyzer_flow.png Graphic file (type png)
+<use picture/diagramm/analyzer_flow.png>
+Package pdftex.def Info: picture/diagramm/analyzer_flow.png  used on input line
+ 55.
 (pdftex.def)             Requested size: 469.47049pt x 347.6057pt.
 
 
@@ -1609,24 +1611,25 @@ Underfull \hbox (badness 1253) in paragraph at lines 63--64
 -фаї, ѕЗа-ба-стов-ка
  []
 
-[20 <./picture/components_diagramm.png>] [21 <./picture/analyzer_flow.png>]
-<picture/seq_diagramm.png, id=324, 1205.50375pt x 1081.03876pt>
-File: picture/seq_diagramm.png Graphic file (type png)
-<use picture/seq_diagramm.png>
-Package pdftex.def Info: picture/seq_diagramm.png  used on input line 83.
+[23 <./picture/diagramm/components_diagramm.png>] [24 <./picture/diagramm/analy
+zer_flow.png>]
+<picture/diagramm/seq_diagramm.png, id=337, 1205.50375pt x 1081.03876pt>
+File: picture/diagramm/seq_diagramm.png Graphic file (type png)
+<use picture/diagramm/seq_diagramm.png>
+Package pdftex.def Info: picture/diagramm/seq_diagramm.png  used on input line 
+83.
 (pdftex.def)             Requested size: 469.47049pt x 420.99309pt.
-
-[22 <./picture/seq_diagramm.png>]
-<picture/db_schema_main.png, id=332, 1511.6475pt x 480.79625pt>
-File: picture/db_schema_main.png Graphic file (type png)
-<use picture/db_schema_main.png>
-Package pdftex.def Info: picture/db_schema_main.png  used on input line 104.
-(pdftex.def)             Requested size: 469.47049pt x 149.31673pt.
- [23 <./picture/db_schema_main.png>]) [24]
+ [25 <./picture/diagramm/seq_diagramm.png>]
+<picture/diagramm/class_diagramm.png, id=345, 1510.64375pt x 479.7925pt>
+File: picture/diagramm/class_diagramm.png Graphic file (type png)
+<use picture/diagramm/class_diagramm.png>
+Package pdftex.def Info: picture/diagramm/class_diagramm.png  used on input lin
+e 104.
+(pdftex.def)             Requested size: 469.47049pt x 149.1075pt.
+ [26 <./picture/diagramm/class_diagramm.png>]) [27]
 \openout2 = `sections/sec_development.aux'.
 
-
-(./sections/sec_development.tex) [25
+ (./sections/sec_development.tex) [28
 
 
 
@@ -1634,38 +1637,38 @@ Package pdftex.def Info: picture/db_schema_main.png  used on input line 104.
 ]
 \openout2 = `sections/sec_economics.aux'.
 
- (./sections/sec_economics.tex [26
+
+(./sections/sec_economics.tex [29
 
 
 
 
-]
-[27]
+] [30]
 Overfull \hbox (4.42296pt too wide) in paragraph at lines 54--70
  [][] 
  []
 
-[28]
+[31]
 Underfull \hbox (badness 3746) in paragraph at lines 108--109
 []\T2A/cmr/m/n/14.4 (+20) Прочие рас-хо-ды свя-за-ны с функ-ци-о-ни-ро-ва-ни-ем
  организации-
  []
 
-[29] [30]
+[32] [33]
 Underfull \hbox (badness 1721) in paragraph at lines 195--196
 []\T2A/cmr/m/n/14.4 (+20) Исходя из рас-че-тов, эко-но-ми-че-ский эф-фект для о
 рганизации-
  []
 
-[31] [32] [33]
+[34] [35] [36]
 Overfull \hbox (6.06575pt too wide) in paragraph at lines 283--301
  [][] 
  []
 
-[34]) [35]
+[37]) [38]
 \openout2 = `sections/final.aux'.
 
- (./sections/final.tex) [36
+ (./sections/final.tex) [39
 
 
 
@@ -1682,7 +1685,7 @@ Underfull \hbox (badness 1087) in paragraph at lines 105--110
 ]. ---
  []
 
-[37
+[40
 \def\@LN@column{1}
 
 
@@ -1699,7 +1702,7 @@ Underfull \hbox (badness 2856) in paragraph at lines 128--133
 i-fever-
  []
 
-)) [38]
+)) [41]
 \openout2 = `diploma/Appendix(referential).aux'.
 
  (./diploma/Appendix(referential).tex
@@ -1735,14 +1738,14 @@ i-fever-
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-<picture/bypass-short-report-print-private.png, id=472, 972.63374pt x 564.60938
+<picture/bypass-short-report-print-private.png, id=484, 972.63374pt x 564.60938
 pt>
 File: picture/bypass-short-report-print-private.png Graphic file (type png)
 <use picture/bypass-short-report-print-private.png>
 Package pdftex.def Info: picture/bypass-short-report-print-private.png  used on
  input line 13.
 (pdftex.def)             Requested size: 512.14963pt x 297.2945pt.
-) [39
+) [42
 
 
  <./picture/bypass-short-report-print-private.png>]
@@ -1826,7 +1829,7 @@ Overfull \hbox (12.42249pt too wide) in paragraph at lines 9--79
 [] [] 
  []
 
-[40
+[43
 
 
 
@@ -1836,7 +1839,7 @@ Overfull \hbox (12.42249pt too wide) in paragraph at lines 9--79
 Package caption Warning: Unused \captionsetup[listing] on input line 166.
 See the caption package documentation for explanation.
 
-runsystem(latexminted cleantemp  --timestamp 20260422084004 FF6E2380EFDE8BEDADB
+runsystem(latexminted cleantemp  --timestamp 20260426150749 FF6E2380EFDE8BEDADB
 04F9845302EF8)...executed safely (allowed).
 
 
@@ -1854,17 +1857,20 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `diploma_report.out' has not changed.
 (rerunfilecheck)             Checksum: E77B926A1AD70A48D73AE5E4275CDEC3;13598.
  ) 
 Here is how much of TeX's memory you used:
- 29198 strings out of 468980
- 584183 string characters out of 5462461
+ 29199 strings out of 468980
+ 584506 string characters out of 5462461
  1158518 words of memory out of 5000000
  57063 multiletter control sequences out of 15000+600000
- 648055 words of font info for 155 fonts, out of 8000000 for 9000
+ 647985 words of font info for 154 fonts, out of 8000000 for 9000
  430 hyphenation exceptions out of 8191
- 80i,12n,84p,1619b,1328s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 80i,12n,84p,2231b,1328s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-dist/fon
 ts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texmf-dist/fonts/type1/publi
@@ -1877,10 +1883,10 @@ public/cm-super/sfrm1000.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super
 /usr/share/texmf-dist/fonts/type1/public/cm-super/sfti0800.pfb></usr/share/texm
 f-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/share/texmf-dist/fonts/ty
 pe1/public/cm-super/sfti1440.pfb>
-Output written on diploma_report.pdf (41 pages, 1459409 bytes).
+Output written on diploma_report.pdf (44 pages, 1467386 bytes).
 PDF statistics:
- 578 PDF objects out of 1000 (max. 8388607)
- 484 compressed objects within 5 object streams
- 134 named destinations out of 1000 (max. 500000)
+ 591 PDF objects out of 1000 (max. 8388607)
+ 494 compressed objects within 5 object streams
+ 137 named destinations out of 1000 (max. 500000)
  37110 words of extra memory for PDF output out of 42996 (max. 10000000)
 

@@ -1,4 +1,4 @@
-@startuml component_diagram_vertical
+@startuml components_diagramm
 top to bottom direction
 skinparam defaultTextAlignment center
 skinparam componentStyle uml2
