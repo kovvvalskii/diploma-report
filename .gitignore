@@ -1,0 +1,27 @@
+.geminiignore
+.cursorignore
+.cursorrules
+
+# Сборка и логи LaTeX
+*.aux
+*.bbl
+*.blg
+*.brf
+*.bcf
+*.idx
+*.ilg
+*.ind
+*.lof
+*.lot
+*.out
+*.toc
+*.log
+*.run.xml
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdfsync
+
+# Временные файлы редакторов (опционально)
+*.swp
+*~
