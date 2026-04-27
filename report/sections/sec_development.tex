@@ -7,276 +7,671 @@
 
 Модуль Fetcher является входной точкой системы и реализован на языке Python 3.12 с использованием асинхронной парадигмы программирования. Основная сложность реализации данного модуля заключалась в необходимости обработки огромных массивов данных проекта GDELT, которые публикуются в виде сжатых CSV-файлов каждые 15 минут и могут содержать информацию о тысячах событий одновременно.
 
-Для обеспечения высокой производительности и минимизации задержек был разработан асинхронный клиент на базе библиотеки `httpx`, позволяющий параллельно загружать архивы событий (Events) и упоминаний (Mentions). После загрузки данные передаются в конвейер обработки, реализованный с применением библиотеки `pandas`, которая обеспечивает векторизованную фильтрацию и очистку данных на низком уровне.
+Для обеспечения высокой производительности и минимизации задержек был разработан асинхронный клиент на базе библиотеки \textbf{httpx}, позволяющий параллельно загружать архивы событий и упоминаний. После загрузки данные передаются в конвейер обработки, реализованный с применением библиотеки \textbf{pandas}, которая обеспечивает векторизованную фильтрацию и очистку данных на низком уровне.
 
 Ниже представлен фрагмент реализации асинхронного сервиса загрузки данных:
 
-\begin{verbatim}
+\begin{lstlisting}[language=Python]
 import asyncio
 import httpx
 import pandas as pd
 from aio_pika import connect, Message
 
+
 class GdeltFetcher:
-    def __init__(self, rabbit_url: str):
+    BASE_URL = "http://data.gdeltproject.org/gdeltv2/"
+    GOLDSTEIN_THRESHOLD = -5.0
+
+    def __init__(self, rabbit_url: str, http_timeout: float = 30.0):
         self.rabbit_url = rabbit_url
-        self.base_url = "http://data.gdeltproject.org/gdeltv2/"
+        self.client = httpx.AsyncClient(timeout=http_timeout)
 
-    async def fetch_latest_export(self, file_name: str):
-        async with httpx.AsyncClient() as client:
-            url = f"{self.base_url}{file_name}"
-            response = await client.get(url)
-            if response.status_code == 200:
-                with open(f"/tmp/{file_name}", "wb") as f:
-                    f.write(response.content)
-                return True
-        return False
+    async def fetch_latest_export(self, file_name: str) -> bool:
+        url = f"{self.BASE_URL}{file_name}"
+        response = await self.client.get(url)
+        if response.status_code != 200:
+            return False
+        with open(f"/tmp/{file_name}", "wb") as fp:
+            fp.write(response.content)
+        return True
 
-    async def process_csv(self, path: str):
-        df = pd.read_csv(path, sep='\t', header=None)
-        # GoldsteinScale < -5.0 (критические инциденты)
-        critical_events = df[df[30] < -5.0] 
-        return critical_events[0].tolist()
+    async def process_csv(self, path: str) -> list[str]:
+        df = pd.read_csv(path, sep="\t", header=None, on_bad_lines="skip")
+        critical_events = df[df[30] < self.GOLDSTEIN_THRESHOLD]
+        return critical_events[0].astype(str).tolist()
 
-    async def notify_analyzer(self, event_ids: list):
+    async def notify_analyzer(self, event_ids: list[str]) -> None:
         connection = await connect(self.rabbit_url)
         async with connection:
             channel = await connection.channel()
             for eid in event_ids:
-                msg = Message(str(eid).encode())
                 await channel.default_exchange.publish(
-                    msg, routing_key="events_queue"
+                    Message(eid.encode()),
+                    routing_key="events_queue",
                 )
-\end{verbatim}
+
+    async def run(self, file_name: str) -> None:
+        if not await self.fetch_latest_export(file_name):
+            return
+        ids = await self.process_csv(f"/tmp/{file_name}")
+        if ids:
+            await self.notify_analyzer(ids)
+\end{lstlisting}
 
 Ключевые особенности реализации модуля сбора данных:
 \begin{itemize}
     \item применение асинхронных контекстных менеджеров для эффективного управления сетевыми соединениями и ресурсами операционной системы;
-    \item использование векторизованных операций библиотеки `pandas` для мгновенной фильтрации записей по пороговым значениям индекса Гольдштейна;
+    \item использование векторизованных операций библиотеки \textbf{pandas} для быстрой фильтрации записей по пороговым значениям индекса Гольдштейна;
     \item реализация отказоустойчивой очереди сообщений на базе RabbitMQ, гарантирующей доставку идентификаторов событий в аналитический модуль;
     \item внедрение механизмов логирования и мониторинга состояния сетевых запросов для оперативного выявления сбоев на стороне источников данных;
     \item использование временных хранилищ для минимизации нагрузки на оперативную память при обработке файлов объемом в несколько сотен мегабайт.
 \end{itemize}
 
-Данный подход позволил сократить время от момента публикации данных в GDELT до начала их анализа нейронными сетями до 5-10 секунд, что является критически важным для систем экстренного оповещения.
+Данный подход позволил сократить время от момента публикации данных в GDELT до начала их анализа нейронными сетями до 5--10 секунд, что является критически важным для систем экстренного оповещения.
 
-\subsection{Программная реализация интеллектуального анализа на Python}
+\subsection{Программная реализация интеллектуального анализа}
 
-Модуль Analyzer представляет собой высокотехнологичный конвейер на базе FastAPI, объединяющий классические методы NLP и современные генеративные модели. Процесс анализа разделен на этапы извлечения контента, семантической классификации и суммаризации, что позволяет гибко настраивать параметры каждой модели в зависимости от типа входных данных.
+Модуль интеллектуального анализа представляет собой высокотехнологичный конвейер на базе FastAPI, объединяющий классические методы обработки естественного языка и современные генеративные модели. Процесс анализа разделен на этапы извлечения контента, семантической классификации и реферирования, что позволяет гибко настраивать параметры каждой модели в зависимости от типа входных данных.
 
-Для классификации угроз используется модель DeBERTa-v3-large, настроенная на задачу Zero-shot Classification. Это позволяет системе распознавать новые типы инцидентов (например, специфические киберугрозы или новые виды природных аномалий) без необходимости формирования обучающей выборки и дообучения весов нейронной сети.
+Для классификации угроз используется модель DeBERTa-v3-large, настроенная на задачу классификации без предварительного обучения на целевых классах. Это позволяет системе распознавать новые типы инцидентов (например, специфические киберугрозы или новые виды природных аномалий) без необходимости формирования обучающей выборки и дообучения весов нейронной сети.
 
-Особое внимание уделено интеграции с локальной языковой моделью через API Ollama. Это обеспечивает полную автономность системы и исключает зависимость от внешних провайдеров (таких как OpenAI или Anthropic), что критично для обеспечения конфиденциальности и снижения операционных затрат.
+Особое внимание уделено интеграции с локальной языковой моделью через программный интерфейс Ollama. Это обеспечивает полную автономность системы и исключает зависимость от внешних провайдеров, что критично для обеспечения конфиденциальности и снижения операционных затрат.
 
-Листинг кода модуля анализа с применением трансформеров и LLM:
+Для поддержки локализации в аналитический конвейер был добавлен этап определения языка исходного материала и генерации переводных версий ключевых полей события. На практике это означает, что после извлечения текста статьи модуль определяет язык источника, формирует базовую краткую сводку, а затем подготавливает локализованные варианты названия и описания для языков, поддерживаемых пользовательским интерфейсом. Такой подход позволяет не выполнять перевод во время каждого запроса к программному интерфейсу, а сохранять готовые версии в основной базе данных.
 
-\begin{verbatim}
+Листинг кода модуля анализа с применением трансформеров и больших языковых моделей:
+
+\begin{lstlisting}[language=Python]
 from transformers import pipeline
 import httpx
 
+
 class IntelligenceAnalyzer:
-    def __init__(self, ollama_url: str):
-        # Модель для Zero-Shot классификации
-        model_name = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling"
+    LABELS = ["terrorism", "disaster", "protest", "medical"]
+    SUPPORTED_LOCALES = ("en", "ru")
+
+    def __init__(self, ollama_url: str, llm_model: str = "qwen2.5:7b"):
         self.classifier = pipeline(
-            "zero-shot-classification", 
-            model=model_name
+            "zero-shot-classification",
+            model="MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling",
         )
         self.ollama_url = ollama_url
-        self.labels = ["terrorism", "disaster", "protest", "medical"]
+        self.llm_model = llm_model
 
-    async def analyze_text(self, text: str):
-        # 1. Семантическая классификация категории
-        res = self.classifier(text, self.labels, multi_label=False)
-        
-        # 2. Суммаризация через локальную LLM
+    async def analyze_text(self, text: str) -> dict:
+        source_language = self.detect_language(text)
+        scores = self.classifier(text, self.LABELS, multi_label=False)
+
         summary = await self.generate_llm_summary(text)
-        
+        localized = await self.localize_event(summary, self.SUPPORTED_LOCALES)
+
         return {
-            "category": res['labels'][0],
-            "confidence": res['scores'][0],
-            "summary": summary
+            "category": scores["labels"][0],
+            "confidence": scores["scores"][0],
+            "source_language": source_language,
+            "summary": summary,
+            "description_i18n": localized,
         }
 
-    async def generate_llm_summary(self, content: str):
-        instruct = "Summarize this news in one short sentence:"
-        prompt = f"{instruct} {content[:1000]}"
-        payload = {"model": "qwen2.5:7b", "prompt": prompt, "stream": False}
-        async with httpx.AsyncClient() as client:
-            url = f"{self.ollama_url}/api/generate"
-            response = await client.post(url, json=payload)
-            return response.json().get("response", "N/A")
-\end{verbatim}
+    async def generate_llm_summary(self, content: str) -> str:
+        prompt = (
+            "Summarize this news in one short sentence: "
+            f"{content[:1000]}"
+        )
+        payload = {
+            "model": self.llm_model,
+            "prompt": prompt,
+            "stream": False,
+        }
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                f"{self.ollama_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            return response.json().get("response", "")
+
+    async def localize_event(self, summary: str, locales) -> dict:
+        return {locale: await self.translate_text(summary, locale)
+                for locale in locales}
+
+    def detect_language(self, text: str) -> str:
+        return "en"
+
+    async def translate_text(self, text: str, locale: str) -> str:
+        return text
+\end{lstlisting}
 
 Программные решения, внедренные в аналитический модуль:
 \begin{itemize}
-    \item использование библиотеки `transformers` для реализации высокоточной семантической классификации текстов на естественном языке;
-    \item интеграция с локальным сервером Ollama через REST API для выполнения ресурсоемких задач суммаризации на выделенных GPU-мощностях;
-    \item ограничение входного контекста для LLM до 1000 символов с целью оптимизации времени инференса и предотвращения галлюцинаций модели;
-    \item применение асинхронных вызовов к API нейросетевых моделей для обеспечения параллельной обработки нескольких инцидентов одновременно;
-    \item реализация механизмов повторных попыток (Retry) при взаимодействии с вычислительными бэкендами машинного обучения.
+    \item использование библиотеки \textbf{transformers} для реализации высокоточной семантической классификации текстов на естественном языке;
+    \item интеграция с локальным сервером Ollama через программный интерфейс в стиле REST для выполнения ресурсоемких задач реферирования на выделенных графических мощностях;
+    \item ограничение входного контекста для большой языковой модели до 1000 символов с целью оптимизации времени инференса и предотвращения галлюцинаций модели;
+    \item применение асинхронных вызовов к программным интерфейсам нейросетевых моделей для обеспечения параллельной обработки нескольких инцидентов одновременно;
+    \item сохранение языка исходного материала и локализованных версий описания для дальнейшей выдачи пользователю без повторного инференса;
+    \item реализация механизмов повторных попыток при взаимодействии с вычислительными модулями машинного обучения.
 \end{itemize}
 
-\subsection{Реализация серверной логики и ГИС-компонентов на Java}
+\subsection{Реализация серверной логики и геоинформационных компонентов}
 
 Ядро системы, отвечающее за хранение данных, управление пользователями и выполнение пространственных запросов, реализовано на Java 21 с использованием фреймворка Spring Boot 3.3. Ключевым технологическим преимуществом является использование Hibernate Spatial, что позволяет оперировать геометрическими объектами непосредственно в коде приложения.
 
-Для реализации логики геофенсинга — поиска пользователей, находящихся в зоне риска — применяется специализированная структура данных PostGIS. Это позволяет выполнять сложные математические вычисления на стороне СУБД, возвращая в приложение только готовый результат.
+Для реализации логики геофенсинга~--- поиска пользователей, находящихся в зоне риска,~--- применяется специализированное расширение PostGIS. Это позволяет выполнять сложные математические вычисления на стороне СУБД, возвращая в приложение только готовый результат.
 
-Пример реализации Entity-класса события с поддержкой пространственных данных:
+Сущность \textbf{EventEntity} описывает структуру инцидента в базе данных и одновременно обеспечивает поддержку локализованных полей и геопространственных типов:
 
-\begin{verbatim}
+\begin{lstlisting}[language=Java]
 @Entity
-@Table(name = "events")
-@Data
+@Table(name = "event")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class EventEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String title;
-    
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "source_id")
+    private SourceEntity source;
 
-    @Column(columnDefinition = "geometry(Geometry, 4326)")
-    private Geometry impactArea;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "type_id")
+    private EventTypeEntity type;
 
-    @Column(name = "created_at")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "title", columnDefinition = "jsonb", nullable = false)
+    private Map<String, String> title;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "description", columnDefinition = "jsonb")
+    private Map<String, String> description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "severity_id")
+    private EventSeverityEntity severity;
+
+    @Column(columnDefinition = "geometry(Point,4326)")
+    private Point epicenter;
+
+    @Column(columnDefinition = "geometry(Polygon,4326)")
+    private Polygon impactArea;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @OneToMany(mappedBy = "event",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true)
+    @Builder.Default
+    private List<MentionEntity> mentions = new ArrayList<>();
 }
-\end{verbatim}
+\end{lstlisting}
 
-Бизнес-логика проверки безопасности маршрута реализована в сервисном слое. Ниже представлен фрагмент кода, отвечающий за пересечение маршрута пользователя с активными зонами угроз:
+Поверх сущности построен слой репозиториев на базе JPA Criteria API. Метод \textbf{findEventsForMap} формирует пространственный запрос для выборки инцидентов в пределах видимой области карты с учетом порога опасности и активного языка интерфейса:
 
-\begin{verbatim}
-@Service
-@RequiredArgsConstructor
-public class RiskAssessmentService {
-    private final EventRepository eventRepository;
+\begin{lstlisting}[language=Java]
+@Repository
+public class CriteriaEventGeofeatureRepository
+        implements EventGeofeatureRepository {
 
-    public List<RiskNotificationDto> checkRouteSafety(Geometry route) {
-        // Выполнение ST_Intersects в базе данных
-        var events = eventRepository.findIntersecting(route);
-        
-        return events.stream()
-            .map(e -> new RiskNotificationDto(e.getId(), e.getTitle()))
-            .toList();
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public List<EventGeofeatureDto> findEventsForMap(
+            EventGeofeatureFilter filter) {
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<EventGeofeatureDto> query =
+                cb.createQuery(EventGeofeatureDto.class);
+        Root<EventEntity> root = query.from(EventEntity.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (filter.getMinLon() != null && filter.getMaxLon() != null) {
+            Expression<?> envelope = cb.function(
+                    "ST_MakeEnvelope", Object.class,
+                    cb.literal(filter.getMinLon()),
+                    cb.literal(filter.getMinLat()),
+                    cb.literal(filter.getMaxLon()),
+                    cb.literal(filter.getMaxLat()),
+                    cb.literal(4326));
+            predicates.add(cb.isTrue(cb.function(
+                    "ST_Intersects", Boolean.class,
+                    root.get("epicenter"), envelope)));
+        }
+
+        if (filter.getMaxSeverity() != null) {
+            predicates.add(cb.lessThanOrEqualTo(
+                    root.get("severity").get("severityValue"),
+                    filter.getMaxSeverity().getSeverityValue()));
+        }
+
+        predicates.add(cb.or(
+                cb.isNull(root.get("expiresAt")),
+                cb.greaterThan(root.get("expiresAt"),
+                        LocalDateTime.now())));
+
+        Expression<String> localizedTitle = cb.function(
+                "jsonb_extract_path_text", String.class,
+                root.get("title"), cb.literal(filter.getLang()));
+        Expression<String> geoJson = cb.function(
+                "ST_AsGeoJSON", String.class,
+                root.get("epicenter"));
+
+        query.select(cb.construct(EventGeofeatureDto.class,
+                root.get("id"),
+                localizedTitle,
+                root.get("severity").get("severityValue"),
+                geoJson));
+        query.where(predicates.toArray(new Predicate[0]));
+
+        return entityManager.createQuery(query).getResultList();
     }
 }
-\end{verbatim}
+\end{lstlisting}
+
+Для отдачи геоданных клиентскому приложению реализован унифицированный контроллер \textbf{GeoServerController}, который агрегирует поставщиков геообъектов разных типов в один массовый эндпоинт. Такой подход позволяет фронтенду одним запросом получать сразу все слои карты:
+
+\begin{lstlisting}[language=Java]
+@RestController
+@RequestMapping("/api/v1/geoserver")
+@CrossOrigin(origins = "*")
+public class GeoServerController {
+
+    private final Map<String, GeofeatureProvider<?, ?>> layerProviders;
+
+    public GeoServerController(List<GeofeatureProvider<?, ?>> providers) {
+        this.layerProviders = providers.stream().collect(
+                Collectors.toMap(GeofeatureProvider::getLayerName, p -> p));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<Map<String, GeoJsonFeatureCollection>>
+            getFeaturesForMap(
+                    @RequestBody BatchGeofeatureRequestDto request,
+                    @RequestParam(defaultValue = "en") String lang) {
+
+        if (!List.of("en", "ru").contains(lang)) {
+            throw new BadRequestException(
+                    "lang %s is not supported".formatted(lang));
+        }
+        Map<String, Object> common = new HashMap<>(request.getCommon());
+        common.put("lang", lang);
+
+        Map<String, GeoJsonFeatureCollection> result = new HashMap<>();
+        for (var layer : request.getLayers().entrySet()) {
+            var provider = layerProviders.get(layer.getKey());
+            if (provider == null) {
+                throw new BadRequestException(
+                        "layer " + layer.getKey() + " not found");
+            }
+            var layerProps = new HashMap<>(common);
+            layerProps.putAll(layer.getValue());
+            result.put(layer.getKey(),
+                    new GeoJsonFeatureCollection(
+                            fetchFeatures(provider, layerProps)));
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    private <D extends GeofeatureDto, F extends GeofeatureFilter>
+            List<D> fetchFeatures(GeofeatureProvider<D, F> provider,
+                                  Map<String, Object> props) {
+        return provider.getGeofeatures(provider.buildFilter(props));
+    }
+}
+\end{lstlisting}
 
 Технические особенности реализации серверной части:
 \begin{itemize}
     \item использование библиотеки JTS (Java Topology Suite) для выполнения точных геометрических вычислений на стороне приложения;
     \item применение аннотаций JPA и Hibernate Spatial для автоматического маппинга географических координат в типы данных PostGIS;
-    \item реализация кастомных репозиториев с использованием Native SQL для оптимизации сложных пространственных операций пересечения и буферизации;
-    \item использование паттерна DTO (Data Transfer Object) для безопасной и эффективной передачи данных между бэкендом и фронтенд-приложением;
+    \item реализация специализированных репозиториев на базе Criteria API для динамического построения пространственных запросов с фильтрами по пороговому уровню опасности, типу события и сроку актуальности;
+    \item построение унифицированного программного интерфейса \textbf{/geoserver/batch}, агрегирующего разные слои геоданных через паттерн \textbf{GeofeatureProvider}, что упрощает добавление новых типов геообъектов в будущем;
+    \item хранение локализованных заголовков и описаний событий в JSONB-полях PostgreSQL с выбором нужной версии непосредственно в SQL-запросе через \textbf{jsonb\_extract\_path\_text};
     \item внедрение механизмов кэширования результатов гео-запросов для снижения нагрузки на дисковую подсистему базы данных при частом обновлении координат.
 \end{itemize}
 
-\subsection{Реализация системы многоканальных уведомлений}
+\subsection{Реализация системы почтовых уведомлений}
 
-Для обеспечения гарантированной доставки информации об угрозах в системе реализована многоканальная рассылка, включающая Push-уведомления и электронную почту. Сервис уведомлений на Java использует `Spring Mail` для взаимодействия с SMTP-сервером и формирования HTML-шаблонов писем.
+Для гарантированной доставки информации об угрозах в системе реализована рассылка по электронной почте, рассматриваемая как резервный и юридически значимый канал коммуникации. Сервис уведомлений на Java использует \textbf{Spring Mail} для взаимодействия с почтовым сервером и формирования HTML-шаблонов писем.
 
-Пример реализации сервиса отправки email-оповещений:
+Пример реализации сервиса отправки почтовых оповещений:
 
-\begin{verbatim}
+\begin{lstlisting}[language=Java]
 @Service
 @RequiredArgsConstructor
 public class EmailNotificationService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    public void sendAlert(String to, EventEntity event) {
+    public void sendAlert(String to, EventEntity event, String locale) {
         Context context = new Context();
         context.setVariable("event", event);
+        context.setVariable("locale", locale);
+
         String body = templateEngine.process("risk-alert", context);
-        
+        String title = event.getTitle()
+                .getOrDefault(locale, event.getTitle().get("en"));
+
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
+        MimeMessageHelper helper = new MimeMessageHelper(message,
+                MimeMessageHelper.MULTIPART_MODE_NO,
+                StandardCharsets.UTF_8.name());
         helper.setTo(to);
-        helper.setSubject("Security Alert: " + event.getTitle());
+        helper.setSubject("Security Alert: " + title);
         helper.setText(body, true);
-        
+
         mailSender.send(message);
     }
 }
-\end{verbatim}
+\end{lstlisting}
 
-Важным этапом разработки стала верстка шаблонов уведомлений, которые должны быть читаемы на любых устройствах. На рисунке \ref{fig:email_notification} представлено окно с email-сообщением об опасности, которое получает пользователь при вхождении в зону риска.
+Отдельным этапом разработки стала верстка шаблонов уведомлений, которые должны быть читаемы на любых устройствах и почтовых клиентах. Исходные HTML-шаблоны хранятся в каталоге \textbf{html-snippets} проекта~--- по одному файлу на каждую поддерживаемую локаль. На рисунке~\ref{fig:email_notification_en} показано почтовое уведомление для англоязычного пользователя, а на рисунке~\ref{fig:email_notification_ru} представлена русскоязычная версия того же сценария оповещения. Обе версии используют единую табличную верстку с инлайн-стилями, что обеспечивает совместимость с большинством современных почтовых клиентов, включая Microsoft Outlook, Gmail и Apple Mail. В верхней части письма расположен фирменный градиентный заголовок с уровнем угрозы, ниже~--- блок ключевых параметров события (регион, время, расстояние от пользователя), за ним следуют аналитическая сводка, нумерованный список рекомендуемых действий и кнопка перехода в систему мониторинга.
 
-\begin{figure}[h]
+\newpage
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=0.9\textwidth]{picture/email_notification_view.png}
-    \caption{Окно с email-уведомлением о критической угрозе безопасности}
-    \label{fig:email_notification}
-\end{figure}
+    \includegraphics[width=\linewidth]{picture/email_notification_en.png}
+    \captionof{figure}{Почтовое уведомление о риске безопасности на английском языке}
+    \label{fig:email_notification_en}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/email_notification_ru.png}
+    \captionof{figure}{Почтовое уведомление о риске безопасности на русском языке}
+    \label{fig:email_notification_ru}
+\end{minipage}
 
 \subsection{Разработка клиентского интерфейса и ГИС-компонентов}
 
-Фронтенд-приложение построено на базе React и TypeScript. Для интеграции карты в React-компоненты используется библиотека `react-map-gl`, которая оборачивает вызовы MapLibre GL JS.
+Фронтенд-приложение построено на базе React 19 и Redux Toolkit. Для отрисовки карты в React-компонентах используется библиотека \textbf{react-map-gl}, которая инкапсулирует вызовы движка MapLibre GL JS и позволяет декларативно подключать слои данных. Выбор библиотеки обусловлен открытой лицензией, отсутствием платных ограничений и поддержкой векторных тайлов.
 
-Пример инициализации карты и добавления слоя зон риска:
+Локализация клиентского интерфейса реализована через словари переводов на базе \textbf{i18next} и передачу выбранной локали в запросах к серверной части. При открытии карты или страницы события клиентская часть получает уже подготовленные локализованные поля, поэтому пользователю не требуется ждать выполнения машинного перевода на клиенте, а все формулировки остаются согласованными между веб-интерфейсом и почтовыми уведомлениями.
 
-\begin{verbatim}
-const RiskMap = ({ events }) => {
-  return (
-    <Map
-      initialViewState={{ longitude: 0, latitude: 0, zoom: 2 }}
-      mapStyle="https://demotiles.maplibre.org/style.json"
-    >
-      <Source id="risk-zones" type="geojson" data={events}>
-        <Layer
-          id="zone-fill"
-          type="fill"
-          paint={{ 'fill-color': '#ff0000', 'fill-opacity': 0.4 }}
-        />
-      </Source>
-    </Map>
-  );
-};
-\end{verbatim}
+Обращение к серверу геоданных оформлено в виде единого запроса в массовый эндпоинт \textbf{/api/v1/geoserver/batch}, что позволяет за один сетевой обмен получать все слои карты, видимые в текущей области:
 
-На рисунке \ref{fig:main_map_view} представлен главный интерфейс системы в режиме реального времени.
+\begin{lstlisting}[language=JavaScriptES]
+import { API_BASE_URL } from '../config/apiConfig.js';
+import { requestJson } from './httpClient.js';
 
-\begin{figure}[h]
+export async function fetchMapBatch({ bounds, lang, maxSeverity,
+                                       includeTravellerRoutes }) {
+    const body = {
+        common: {
+            minLon: bounds._sw.lng,
+            minLat: bounds._sw.lat,
+            maxLon: bounds._ne.lng,
+            maxLat: bounds._ne.lat,
+        },
+        layers: {
+            events: { maxSeverity },
+        },
+    };
+
+    if (includeTravellerRoutes) {
+        body.layers.travellerRoutes = {};
+    }
+
+    return requestJson(`${API_BASE_URL}/geoserver/batch?lang=${lang}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept-Language': lang,
+        },
+        body: JSON.stringify(body),
+    });
+}
+\end{lstlisting}
+
+Главный компонент карты декларативно объявляет слои инцидентов, маршрутов путешественника и пользовательских остановок. При перемещении области просмотра автоматически перезапрашиваются геоданные, а при клике по точке открывается всплывающее окно и боковая панель с подробностями события:
+
+\begin{lstlisting}[language=JavaScriptES]
+export default function MapView() {
+    const dispatch = useDispatch();
+    const mapRef = useRef(null);
+    const { i18n } = useTranslation();
+
+    const { viewState, tileProvider, projection, isPlacingStops } =
+        useSelector((state) => state.map);
+    const { data: layerData, activeLayers, filter } =
+        useSelector((state) => state.layers);
+    const { routeGeoJson, stops } = useSelector((state) => state.travel);
+    const { selectedEvent } = useSelector((state) => state.events);
+
+    const loadDataForCurrentBounds = useCallback(() => {
+        if (mapRef.current) {
+            const bounds = mapRef.current.getMap().getBounds();
+            dispatch(fetchLayerData({ bounds, lang: i18n.language }));
+        }
+    }, [dispatch, i18n.language]);
+
+    const onMapClick = useCallback((event) => {
+        const { features, lngLat } = event;
+        if (isPlacingStops) {
+            dispatch(addStop({
+                longitude: lngLat.lng,
+                latitude: lngLat.lat,
+            }));
+            return;
+        }
+        const clicked = features?.find(
+            (f) => f.layer.id === 'events-layer');
+        if (clicked) {
+            dispatch(setSelectedEvent({
+                longitude: lngLat.lng,
+                latitude: lngLat.lat,
+                properties: clicked.properties,
+            }));
+            dispatch(openEventDetails());
+        }
+    }, [dispatch, isPlacingStops]);
+
+    return (
+        <Map ref={mapRef} {...viewState}
+             mapStyle={TILE_PROVIDERS[tileProvider]}
+             projection={projection}
+             interactiveLayerIds={['events-layer']}
+             onMove={(e) => dispatch(setViewState(e.viewState))}
+             onMoveEnd={loadDataForCurrentBounds}
+             onClick={onMapClick}
+             onLoad={loadDataForCurrentBounds}
+             cursor={isPlacingStops ? 'crosshair' : 'default'}>
+            {activeLayers.includes('events') && layerData.events && (
+                <Source id="events-source" type="geojson"
+                        data={layerData.events}>
+                    <Layer {...eventsHaloStyle} />
+                    <Layer {...eventsLayerStyle} />
+                </Source>
+            )}
+            {selectedEvent && <EventPopup
+                selectedEvent={selectedEvent} />}
+        </Map>
+    );
+}
+\end{lstlisting}
+
+Аналитическая логика модуля прокладки маршрутов реализована на стороне клиента и опирается на формулу гаверсинусов, обеспечивающую корректный расчет дистанции между географическими координатами на сфере. Дополнительно поддерживается расчет расстояния от точки события до ближайшего сегмента маршрута, что используется для определения зоны риска вокруг проложенного пути:
+
+\begin{lstlisting}[language=JavaScriptES]
+const EARTH_R_KM = 6371;
+
+const toRad = (deg) => (deg * Math.PI) / 180;
+
+export function haversineKm(a, b) {
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+    const x = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    return EARTH_R_KM * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+export function pointToSegmentKm(p, a, b) {
+    const dx = b.longitude - a.longitude;
+    const dy = b.latitude - a.latitude;
+    const lenSq = dx * dx + dy * dy;
+    let t = lenSq === 0
+        ? 0
+        : ((p.longitude - a.longitude) * dx +
+           (p.latitude  - a.latitude)  * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    return haversineKm(p, {
+        longitude: a.longitude + t * dx,
+        latitude:  a.latitude  + t * dy,
+    });
+}
+
+export function pointToRouteKm(point, stops) {
+    if (!stops || stops.length === 0) return Infinity;
+    if (stops.length === 1) return haversineKm(point, stops[0]);
+    let min = Infinity;
+    for (let i = 0; i < stops.length - 1; i += 1) {
+        const d = pointToSegmentKm(point, stops[i], stops[i + 1]);
+        if (d < min) min = d;
+    }
+    return min;
+}
+\end{lstlisting}
+
+Перед началом работы с системой пользователь проходит процедуру аутентификации. Окно входа выполнено в едином стиле приложения и поддерживает мгновенное переключение языка интерфейса и темы оформления. После успешной авторизации пользователь попадает на главный экран, представляющий собой интерактивную карту мира с активными инцидентами. Цвет и размер маркеров рассчитываются на основе уровня опасности, а вокруг каждой точки отрисовывается мягкий ореол, имитирующий пульсирующее поведение и упрощающий визуальное восприятие плотности рисков. На рисунке~\ref{fig:login_screen} представлен экран входа в систему, а на рисунке~\ref{fig:main_map_view}~--- главный интерфейс системы в режиме реального времени с визуализацией глобальной картины инцидентов.
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.85\textwidth]{picture/login_screen.png}
+    \caption{Окно входа в систему мониторинга рисков}
+    \label{fig:login_screen}
+\end{figure}
+
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=1\textwidth]{picture/main_map_interface.png}
     \caption{Главный экран системы с визуализацией активных инцидентов и зон риска}
     \label{fig:main_map_view}
 \end{figure}
 
-Пользователь имеет возможность не только наблюдать текущую ситуацию, но и проводить аналитическую работу. На рисунке \ref{fig:route_analysis} показан процесс анализа планируемого пути путешественника.
+Для детального изучения отдельного инцидента в интерфейсе реализована страница события с локализованным заголовком, описанием, уровнем угрозы, временем публикации и ссылкой на исходный материал. На странице приводятся также агрегированный уровень риска, регион и тип инцидента, аналитическая сводка и блок с рекомендуемыми действиями для оператора. Поскольку текстовое содержимое формируется на этапе аналитической обработки и сохраняется сразу для всех поддерживаемых локалей, переключение языка происходит мгновенно и не требует выполнения машинного перевода в момент открытия карточки. На рисунке~\ref{fig:event_page_en} показана англоязычная версия страницы события, а на рисунке~\ref{fig:event_page_ru} представлена русскоязычная версия той же карточки.
 
-\begin{figure}[h]
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=1\textwidth]{picture/route_analysis_view.png}
-    \caption{Интерфейс анализа маршрута и отображение предупреждений о безопасности}
-    \label{fig:route_analysis}
+    \includegraphics[width=\linewidth]{picture/event_page_en.png}
+    \captionof{figure}{Страница события в пользовательском интерфейсе на английском языке}
+    \label{fig:event_page_en}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/event_page_ru.png}
+    \captionof{figure}{Страница события в пользовательском интерфейсе на русском языке}
+    \label{fig:event_page_ru}
+\end{minipage}
+
+\subsection{Разработка интерфейса прокладки и анализа маршрута}
+
+Помимо мониторинга текущих инцидентов система предоставляет инструмент планирования маршрута, в котором пользователь последовательно проходит четыре шага мастера: добавление точек, настройка расписания, анализ безопасности и сохранение маршрута. Дополнительно поддерживается вкладка с ранее сохраненными маршрутами, что позволяет вернуться к редактированию или дублированию существующего пути. Анимированные переходы между шагами и интерактивная установка точек прямо на карте делают работу с модулем интуитивной даже для пользователей без специальной подготовки.
+
+На рисунке~\ref{fig:route_step1} показан первый шаг мастера~--- добавление путевых точек. Для каждой точки отображается порядковый номер, локализованное название, координаты и быстрые действия, позволяющие центрировать карту на точке либо удалить ее. Дополнительно поддерживается режим, в котором новая точка автоматически создается по клику на карте, что особенно удобно при первичной прокладке маршрута в незнакомом регионе.
+
+На рисунке~\ref{fig:route_step2} представлен второй шаг~--- настройка расписания. Пользователь указывает даты начала и окончания пребывания в каждой точке, что в дальнейшем используется для адресной фильтрации инцидентов по времени. На этом же шаге отображается итоговая длительность поездки, общее число точек и расчетная дистанция в километрах. Полученные данные сохраняются в локальное состояние клиента и не отправляются на сервер до явного подтверждения сохранения маршрута, что позволяет пользователю свободно экспериментировать с расписанием без побочных эффектов.
+
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/route_planning_step1_waypoints.png}
+    \captionof{figure}{Шаг 1 мастера прокладки маршрута: добавление путевых точек}
+    \label{fig:route_step1}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/route_planning_step2_schedule.png}
+    \captionof{figure}{Шаг 2 мастера прокладки маршрута: настройка расписания}
+    \label{fig:route_step2}
+\end{minipage}
+
+Третий шаг мастера, изображенный на рисунке~\ref{fig:route_step3}, посвящен анализу безопасности. На стороне клиента вычисляется минимальное расстояние от каждого активного инцидента до сегментов маршрута, после чего инциденты, попавшие в настраиваемый радиус буфера, выводятся в виде списка предупреждений. Для удобства восприятия каждое предупреждение сопровождается цветным индикатором уровня опасности и расстоянием от линии маршрута. Радиус буфера задается пользователем при помощи бегунка и может варьироваться от 10 до 500 километров, что позволяет адаптировать строгость проверки под требования конкретной поездки.
+
+Логика анализа маршрута сосредоточена в компоненте \textbf{RouteRiskPanel}: список кандидатов формируется из данных о текущих видимых инцидентах и резервных шаблонных событиях, после чего фильтруется по расстоянию от линии маршрута и сортируется по близости к ней:
+
+\begin{lstlisting}[language=JavaScriptES]
+const candidates = useMemo(() => {
+    const realPoints = asPoints(events, i18n.language);
+    const recentPoints = asPoints(eventsList, i18n.language);
+    const fallback = listDemoMode || (!realPoints.length
+                                       && !recentPoints.length)
+        ? asPoints(MOCK_RECENT_EVENTS, i18n.language)
+        : [];
+    const map = new Map();
+    [...realPoints, ...recentPoints, ...fallback].forEach((p) => {
+        if (!p.longitude || !p.latitude || !p.id) return;
+        map.set(p.id, p);
+    });
+    return [...map.values()];
+}, [events, eventsList, listDemoMode, i18n.language]);
+
+const intersecting = useMemo(() => {
+    if (!stops.length) return [];
+    return candidates
+        .map((event) => ({
+            ...event,
+            distanceKm: pointToRouteKm(
+                { longitude: event.longitude,
+                  latitude: event.latitude },
+                stops),
+        }))
+        .filter((e) => e.distanceKm <= bufferKm)
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .slice(0, 8);
+}, [candidates, stops, bufferKm]);
+\end{lstlisting}
+
+После прохождения анализа безопасности пользователь переходит на финальный шаг мастера~--- сохранение маршрута. На рисунке~\ref{fig:route_step4} показан экран сохранения с вводом названия маршрута, итоговой сводкой и подтверждающим уведомлением системы об успешном сохранении. В случае недоступности серверного эндпоинта клиентское приложение помечает маршрут как сохраненный локально и отображает соответствующую информационную пометку, что обеспечивает непрерывность пользовательского сценария даже при кратковременных сбоях сети. Третий и четвертый шаги мастера представлены на рисунках~\ref{fig:route_step3} и~\ref{fig:route_step4} соответственно.
+
+\noindent
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/route_planning_step3_safety.png}
+    \captionof{figure}{Шаг 3 мастера прокладки маршрута: анализ пересечений с активными инцидентами}
+    \label{fig:route_step3}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{picture/route_planning_step4_save.png}
+    \captionof{figure}{Шаг 4 мастера прокладки маршрута: сохранение и подтверждение}
+    \label{fig:route_step4}
+\end{minipage}
+
+Все ранее сохраненные пути доступны на отдельной вкладке. Каждая карточка маршрута содержит название, количество точек, расчетную дистанцию, агрегированный уровень риска и быстрые действия~--- показать на карте либо продублировать для редактирования. При отсутствии у пользователя сохраненных маршрутов или при недоступности соответствующего эндпоинта система демонстрирует тематическую заглушку с примерами популярных маршрутов, что облегчает первичное знакомство с возможностями модуля. Внешний вид списка сохраненных маршрутов представлен на рисунке~\ref{fig:route_my_routes}.
+
+\newpage
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.55\textwidth]{picture/route_planning_my_routes.png}
+    \caption{Список ранее сохраненных пользователем маршрутов}
+    \label{fig:route_my_routes}
 \end{figure}
 
-Важнейшим компонентом системы является модуль доставки Push-уведомлений. Пример такого уведомления представлен на рисунке \ref{fig:mobile_notifications}.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.6\textwidth]{picture/mobile_notif_example.png}
-    \caption{Пример Push-уведомления о критической угрозе на мобильном устройстве}
-    \label{fig:mobile_notifications}
-\end{figure}
-
-\subsection{Выводы по реализации}
+\subsection{Вывод по реализации}
 
 В результате дипломного проектирования был разработан и успешно протестирован полноценный программный комплекс интеллектуального мониторинга рисков, который полностью отвечает всем функциональным требованиям. В ходе реализации были решены сложные инженерные задачи, связанные с обработкой больших данных и интеграцией нейросетевых моделей в реальный бизнес-процесс.
 
 Основные результаты этапа разработки:
 \begin{itemize}
     \item реализован высокопроизводительный асинхронный модуль сбора данных на Python, способный обрабатывать поток новостей из проекта GDELT в реальном времени;
-    \item разработан интеллектуальный аналитический конвейер, использующий модели DeBERTa-v3 для классификации и LLM Qwen 2.5 для автоматической суммаризации инцидентов;
+    \item разработан интеллектуальный аналитический конвейер, использующий модели DeBERTa-v3 для классификации и большую языковую модель Qwen 2.5 для автоматического реферирования инцидентов;
     \item создана надежная серверная часть на Java со встроенной поддержкой геопространственных данных и механизмов асинхронного геофенсинга;
     \item внедрена база данных PostgreSQL с расширением PostGIS, обеспечивающая высокую скорость выполнения пространственных запросов на пересечение маршрутов;
-    \item разработан современный клиентский интерфейс на базе WebGL, обеспечивающий плавную визуализацию глобальной карты рисков;
-    \item реализована система мгновенных Push-уведомлений и email-рассылок, гарантирующая доставку информации о безопасности конечному пользователю.
+    \item разработан современный клиентский интерфейс на базе WebGL, обеспечивающий плавную визуализацию глобальной карты рисков, локализованное отображение карточек событий и интерактивную прокладку маршрута с анализом безопасности на стороне клиента;
+    \item реализована система почтовых рассылок, гарантирующая доставку локализованной информации о безопасности конечному пользователю.
 \end{itemize}
 
 Все компоненты системы интегрированы в рамках единой событийно-ориентированной микросервисной архитектуры, что обеспечивает высокий потенциал для дальнейшего горизонтального масштабирования и внедрения новых прогностических модулей.

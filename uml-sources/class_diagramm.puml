@@ -1,30 +1,30 @@
 @startuml class_diagramm
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
-' linetype ortho делает линии прямыми, под прямым углом — идеально для схем БД
 
-enum "Тип транспорта" as TransportType {
-  АВТОМОБИЛЬ
-  ПЕШЕХОД
-  ВЕЛОСИПЕД
-  ОБЩЕСТВЕННЫЙ_ТРАНСПОРТ
-  АВИАПЕРЕЛЕТ
+enum "TransportType" as TransportType {
+  CAR
+  WALKING
+  BICYCLE
+  PUBLIC_TRANSPORT
+  FLIGHT
 }
 
-enum "Уровень угрозы" as EventSeverity {
-  ИНФОРМАЦИЯ
-  ПРЕДУПРЕЖДЕНИЕ
-  КРИТИЧЕСКАЯ_УГРОЗА
+enum "EventSeverity" as EventSeverity {
+  INFORMATION
+  WARNING
+  CRITICAL_THREAT
 }
 
-class "Пользователь" as User {
+class "User" as User {
   + UUID id [PK]
   + String username
   + String email
+  + String preferred_locale
   + Boolean share_live_location
 }
 
-class "Локация пользователя" as UserLocation {
+class "UserLocation" as UserLocation {
   + UUID id [PK]
   + UUID user_id [FK]
   + Geometry(Point, 4326) current_position
@@ -32,7 +32,7 @@ class "Локация пользователя" as UserLocation {
   + Timestamp recorded_at
 }
 
-class "Маршрут" as Route {
+class "Route" as Route {
   + UUID id [PK]
   + UUID user_id [FK]
   + TransportType transport_type
@@ -42,12 +42,15 @@ class "Маршрут" as Route {
   + Boolean is_active
 }
 
-class "Событие" as Event {
+class "Event" as Event {
   + UUID id [PK]
   + Integer source_id [FK]
   + Integer type_id [FK]
   + String external_id
-  + String title
+  + String source_language
+  + JSONB title_i18n
+  + JSONB description_i18n
+  + JSONB summary_i18n
   + EventSeverity severity
   + Geometry epicenter
   + Geometry impact_area
@@ -57,31 +60,32 @@ class "Событие" as Event {
   + Integer update_count
 }
 
-class "Упоминание" as Mention {
+class "Mention" as Mention {
   + UUID id [PK]
   + UUID event_id [FK]
   + String url
+  + String language
   + String text
   + Timestamp published_at
 }
 
-class "Источник" as Source {
+class "Source" as Source {
   + Integer id [PK]
   + String name
   + String base_url
 }
 
-class "Тип события" as EventType {
+class "EventType" as EventType {
   + Integer id [PK]
   + String name
+  + JSONB name_i18n
   + Float default_radius_km
 }
 
-' Связи с подписанными ролями и направлением чтения
-User "1" *-- "0..*" Route : планирует >
-User "1" *-- "0..*" UserLocation : отслеживает >
-Event "*" --> "1" Source : получено из >
-Event "*" --> "1" EventType : классифицируется как >
-Event "1" *-- "0..*" Mention : описывается в >
+User "1" *-- "0..*" Route : plans >
+User "1" *-- "0..*" UserLocation : tracks >
+Event "*" --> "1" Source : collected from >
+Event "*" --> "1" EventType : classified as >
+Event "1" *-- "0..*" Mention : described by >
 
 @enduml

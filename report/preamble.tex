@@ -46,7 +46,8 @@
 \usepackage{indentfirst}
 \setlength{\parindent}{\fivecharsapprox} 
 
-\usepackage{lscape}
+% Зачем: pdflscape поворачивает страницу в результирующем PDF, чтобы широкие диаграммы читались без поворота головы
+\usepackage{pdflscape}
 \usepackage[left=3cm,top=2.0cm,right=1.5cm,bottom=2.7cm]{geometry}
 
 \frenchspacing
@@ -187,6 +188,12 @@
 
 \usepackage{tabularx}
 
+% Зачем: типы колонок для табличных окружений с автопереносом текста и выравниванием по \textwidth.
+% Префикс \hspace{0pt} включает перенос слов начиная с первого слова ячейки.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash\hspace{0pt}}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash\hspace{0pt}}X}
+\newcolumntype{C}{>{\centering\arraybackslash\hspace{0pt}}X}
+
 \newenvironment{explanationx}
     {
     \noindent 
@@ -256,6 +263,63 @@
 \usepackage{verbatim}
 \usepackage{xcolor}
 \usepackage{minted}
+
+% Зачем: оформление листингов кода с обрамлением, переносом длинных строк и подсветкой синтаксиса
+\usepackage{listings}
+
+\definecolor{trmCodeBackground}{RGB}{248,249,251}
+\definecolor{trmCodeFrame}{RGB}{120,135,170}
+\definecolor{trmCodeKeyword}{RGB}{20,75,170}
+\definecolor{trmCodeComment}{RGB}{110,130,150}
+\definecolor{trmCodeString}{RGB}{30,130,80}
+\definecolor{trmCodeNumber}{RGB}{120,80,160}
+\definecolor{trmCodeRule}{RGB}{120,130,150}
+
+\lstdefinestyle{trmcode}{
+    backgroundcolor=\color{trmCodeBackground},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{trmCodeKeyword}\bfseries,
+    commentstyle=\color{trmCodeComment}\itshape,
+    stringstyle=\color{trmCodeString},
+    numberstyle=\tiny\color{trmCodeRule},
+    numbers=left,
+    numbersep=8pt,
+    frame=single,
+    rulecolor=\color{trmCodeFrame},
+    framerule=0.5pt,
+    framesep=4pt,
+    breaklines=true,
+    breakatwhitespace=false,
+    breakindent=12pt,
+    postbreak=\mbox{\textcolor{trmCodeRule}{$\hookrightarrow$}\space},
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+    abovecaptionskip=4pt,
+    belowcaptionskip=4pt,
+    xleftmargin=0pt,
+    xrightmargin=0pt,
+    aboveskip=10pt,
+    belowskip=10pt,
+    upquote=true,
+    columns=fullflexible,
+    keepspaces=true
+}
+
+\lstdefinelanguage{JavaScriptES}{
+    keywords={await, async, break, case, catch, class, const, continue, default, delete, do, else, export, extends, false, finally, for, from, function, if, import, in, instanceof, let, new, null, of, return, static, super, switch, this, throw, true, try, typeof, undefined, var, void, while, with, yield},
+    keywordstyle=\color{trmCodeKeyword}\bfseries,
+    ndkeywords={React, useState, useEffect, useRef, useMemo, useCallback, dispatch, useSelector, useDispatch, useTranslation, console, fetch, Map, JSON, Math},
+    ndkeywordstyle=\color{trmCodeKeyword},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]',
+    morestring=[b]",
+    morestring=[b]`
+}
+
+\lstset{style=trmcode}
 
 %\AtBeginDocument{\numberwithin{lstlisting}{section}}
 
