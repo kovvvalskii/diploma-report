@@ -1,6 +1,20 @@
 @startuml class_diagramm
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Verdana"
+skinparam defaultFontSize 12
+
+' Увеличиваем отступы между элементами по горизонтали и вертикали
+skinparam nodesep 80
+skinparam ranksep 90
+
+' Принудительный белый фон для всех элементов
+skinparam ClassBackgroundColor white
+skinparam EnumBackgroundColor white
+skinparam ClassBorderColor black
+skinparam EnumBorderColor black
 
 enum "TransportType" as TransportType {
   CAR
@@ -82,10 +96,17 @@ class "EventType" as EventType {
   + Float default_radius_km
 }
 
-User "1" *-- "0..*" Route : plans >
-User "1" *-- "0..*" UserLocation : tracks >
-Event "*" --> "1" Source : collected from >
-Event "*" --> "1" EventType : classified as >
-Event "1" *-- "0..*" Mention : described by >
+' Явное указание направлений для расширения диаграммы по горизонтали
+User "1" *-right- "0..*" Route : plans >
+User "1" *-down- "0..*" UserLocation : tracks >
+Route -down-> TransportType : uses >
+
+Event "*" -up-> "1" Source : collected from >
+Event "*" -up-> "1" EventType : classified as >
+Event "1" *-down- "0..*" Mention : described by >
+Event -right-> EventSeverity : has level >
+
+' Невидимая связь для разнесения пользовательского домена и домена событий в ширину
+Route -[hidden]right- Event
 
 @enduml

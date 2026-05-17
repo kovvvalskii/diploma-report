@@ -3,6 +3,25 @@ top to bottom direction
 skinparam defaultTextAlignment center
 skinparam componentStyle uml2
 
+' Настройки для экономной печати
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Verdana"
+skinparam defaultFontSize 12
+
+' Принудительный белый фон для всех типов элементов на этой диаграмме
+skinparam ComponentBackgroundColor white
+skinparam DatabaseBackgroundColor white
+skinparam QueueBackgroundColor white
+
+skinparam ComponentBorderColor black
+skinparam DatabaseBorderColor black
+skinparam QueueBorderColor black
+
+' Увеличиваем расстояния, чтобы разгрузить перекрестные связи
+skinparam nodesep 60
+skinparam ranksep 80
+
 ' Источники и сбор (Верхний уровень)
 [Источник событий] as GDELT
 [Модуль сбора данных] as Fetcher
