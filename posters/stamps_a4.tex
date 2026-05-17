@@ -1,0 +1,90 @@
+% Лист со штампами для плакатов.
+% Структура штампа взята из report/diploma/Appendix(necessarily).tex (форма ГОСТ,
+% таблица с 11 колонками: 15/10/80/20/20/150/5/5/5/30/30 pt).
+% Поля для подписей и фамилий оставлены пустыми, заполняются вручную.
+% Компилируется через xelatex.
+
+\documentclass{article}
+
+\usepackage[
+    a4paper,
+    margin=12mm,
+    top=15mm,
+    bottom=15mm,
+    includehead=false,
+    includefoot=false
+]{geometry}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+\setmainfont{Liberation Serif}
+
+\usepackage{multirow}
+\usepackage{array}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{2pt}
+
+% Один штамп. Колонки идентичны Appendix(necessarily).tex.
+% Внутри: обозначение документа (3 строки) -> строка заголовков ->
+% 5 строк видов работ / фамилий / подписей. Тема и группа -- multirow.
+\newcommand{\trmstamp}{%
+\begin{tabular}{|p{15pt}|p{10pt}|p{80pt}|p{20pt}|p{20pt}|p{150pt}|p{5pt}|p{5pt}|p{5pt}|p{30pt}|p{30pt}|}
+\hline
+& & & & & \multicolumn{6}{|c|}{\multirow{3}{280pt}{\centering\textit{ГУИР.870ХХ-01\,90\,01-1}}} \tabularnewline \cline{1-5}
+& & & & & \multicolumn{6}{|c|}{} \\ \cline{1-5}
+& & & & & \multicolumn{6}{|c|}{} \\ \hline
+
+\centering\textit{\scriptsize Изм.} &
+\centering\textit{\scriptsize Л.} &
+\centering\textit{\scriptsize № докум.} &
+\centering\textit{\scriptsize Подп.} &
+\centering\textit{\scriptsize Дата} &
+\multirow{6}{150pt}{\centering\textit{Тема дипломного проекта}\\ \textit{\scriptsize Наименование плаката}} &
+\multicolumn{3}{|p{15pt}|}{\centering\textit{\footnotesize Лит}} &
+\centering\textit{\footnotesize Лист} &
+\centering\textit{\footnotesize Листов}
+\tabularnewline \cline{1-5} \cline{7-11}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Разраб.}} &
+\textit{\footnotesize Студент} & & & & &
+\textit{\footnotesize T} & &
+\centering\textit{\footnotesize 1} &
+\centering\textit{\footnotesize 1}
+\tabularnewline \cline{1-5} \cline{7-11}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Пров.}} &
+\textit{\footnotesize Руководитель} & & & & \multicolumn{5}{|c|}{} \\ \cline{1-5}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Т.\,контр.}} &
+\textit{\footnotesize Консультант} & & & & \multicolumn{5}{|c|}{\textit{Кафедра ИИ}} \\ \cline{1-5}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Н.\,контр.}} &
+\textit{\footnotesize Захаров} & & & & \multicolumn{5}{|c|}{\textit{гр.\,821702}} \\ \cline{1-5}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Утв.}} &
+\textit{\footnotesize Шункевич} & & & & \multicolumn{5}{|c|}{} \\ \hline
+\end{tabular}%
+}
+
+% Страница: 3 штампа по вертикали с равными промежутками.
+\newcommand{\stamppage}{%
+    \null\vfill
+    \begin{center}\trmstamp\end{center}
+    \vfill
+    \begin{center}\trmstamp\end{center}
+    \vfill
+    \begin{center}\trmstamp\end{center}
+    \vfill\null
+    \clearpage
+}
+
+\begin{document}
+
+\stamppage
+\stamppage
+
+\end{document}

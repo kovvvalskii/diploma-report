@@ -1,0 +1,54 @@
+% A1-плакаты для дипломного проекта (компилируется через xelatex).
+% Каждый плакат — отдельная страница A1 landscape (841x594 мм) с заголовком сверху
+% и горизонтально расположенным графиком/скриншотом по центру.
+% Векторные источники (PDF из PlantUML SVG) подгружаются из build/pdf/.
+% Растровый скриншот интерфейса берется из ../report/picture/.
+
+\documentclass{article}
+
+\usepackage[
+    paperwidth=841mm,
+    paperheight=594mm,
+    margin=20mm,
+    top=15mm,
+    bottom=15mm,
+    includehead=false,
+    includefoot=false
+]{geometry}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+\setmainfont{Liberation Serif}
+\setsansfont{Liberation Sans}
+
+\usepackage{graphicx}
+
+\graphicspath{{build/pdf/}{../report/picture/}}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% \poster{<заголовок плаката>}{<имя файла без расширения>}
+\newcommand{\poster}[2]{%
+    \noindent
+    \begin{minipage}{\textwidth}
+        \centering
+        {\fontsize{56pt}{64pt}\selectfont\bfseries\sffamily #1\par}
+        \vspace{18mm}
+        \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{#2}
+    \end{minipage}%
+    \clearpage
+}
+
+\begin{document}
+
+\poster{Диаграмма вариантов использования}{use_case_diagramm}
+\poster{Диаграмма компонентов системы}{components_diagramm}
+\poster{Диаграмма последовательности обработки события}{seq_diagramm}
+\poster{Алгоритм работы модуля интеллектуального анализа событий}{analyzer_flow}
+\poster{Диаграмма классов системы}{class_diagramm}
+\poster{Главное окно пользовательского интерфейса}{main_map_interface}
+
+\end{document}

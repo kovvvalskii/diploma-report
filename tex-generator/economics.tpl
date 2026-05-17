@@ -161,7 +161,8 @@ $$
 \centering
 \caption{Результаты расчета цены на разработку программного средства}
 \label{tab2}
-\begin{tabular}{|l|c|}
+\begin{tabular}{| >{\raggedright\arraybackslash}m{0.75\textwidth} 
+                | >{\centering\arraybackslash}m{0.20\textwidth} |}
 \hline
 \multicolumn{1}{|c|}{Наименование статьи затрат} & Сумма, р. \\ \hline
 1 Основная заработная плата разработчиков & ((* "%.2f" | format(total_salary) *)) \\ \hline
