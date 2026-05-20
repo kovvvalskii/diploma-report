@@ -1,7 +1,4 @@
-% Лист со штампами для плакатов.
-% Структура штампа взята из report/diploma/Appendix(necessarily).tex (форма ГОСТ,
-% таблица с 11 колонками: 15/10/80/20/20/150/5/5/5/30/30 pt).
-% Поля для подписей и фамилий оставлены пустыми, заполняются вручную.
+% Лист со штампами для плакатов (6 материалов).
 % Компилируется через xelatex.
 
 \documentclass{article}
@@ -28,13 +25,13 @@
 \setlength{\parindent}{0pt}
 \setlength{\tabcolsep}{2pt}
 
-% Один штамп. Колонки идентичны Appendix(necessarily).tex.
-% Внутри: обозначение документа (3 строки) -> строка заголовков ->
-% 5 строк видов работ / фамилий / подписей. Тема и группа -- multirow.
-\newcommand{\trmstamp}{%
+% Обновленный штамп. 
+% #1 - Обозначение (ГУИР.21702...)
+% #2 - Название плаката
+\newcommand{\trmstamp}[2]{%
 \begin{tabular}{|p{15pt}|p{10pt}|p{80pt}|p{20pt}|p{20pt}|p{150pt}|p{5pt}|p{5pt}|p{5pt}|p{30pt}|p{30pt}|}
 \hline
-& & & & & \multicolumn{6}{|c|}{\multirow{3}{280pt}{\centering\textit{ГУИР.870ХХ-01\,90\,01-1}}} \tabularnewline \cline{1-5}
+& & & & & \multicolumn{6}{|c|}{\multirow{3}{280pt}{\centering\large\textbf{#1}}} \tabularnewline \cline{1-5}
 & & & & & \multicolumn{6}{|c|}{} \\ \cline{1-5}
 & & & & & \multicolumn{6}{|c|}{} \\ \hline
 
@@ -43,48 +40,73 @@
 \centering\textit{\scriptsize № докум.} &
 \centering\textit{\scriptsize Подп.} &
 \centering\textit{\scriptsize Дата} &
-\multirow{6}{150pt}{\centering\textit{Тема дипломного проекта}\\ \textit{\scriptsize Наименование плаката}} &
+\multirow{7}{150pt}{\centering\textit{Интеллектуальная система мониторинга рисков и обеспечения безопасности путешественников}\\ \textit{\scriptsize #2}} &
 \multicolumn{3}{|p{15pt}|}{\centering\textit{\footnotesize Лит}} &
 \centering\textit{\footnotesize Лист} &
 \centering\textit{\footnotesize Листов}
 \tabularnewline \cline{1-5} \cline{7-11}
 
 \multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Разраб.}} &
-\textit{\footnotesize Студент} & & & & &
+\textit{\footnotesize Быльков} & & & & &
 \textit{\footnotesize T} & &
 \centering\textit{\footnotesize 1} &
 \centering\textit{\footnotesize 1}
 \tabularnewline \cline{1-5} \cline{7-11}
 
 \multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Пров.}} &
-\textit{\footnotesize Руководитель} & & & & \multicolumn{5}{|c|}{} \\ \cline{1-5}
+\textit{\footnotesize Кисляк} & & & & \multicolumn{5}{|c|}{} \\ \cline{1-5}
 
 \multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Т.\,контр.}} &
-\textit{\footnotesize Консультант} & & & & \multicolumn{5}{|c|}{\textit{Кафедра ИИ}} \\ \cline{1-5}
+\textit{\footnotesize Захаров} & & & & \multicolumn{5}{|c|}{\textit{Кафедра ИИТ}} \\ \cline{1-5}
 
 \multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Н.\,контр.}} &
-\textit{\footnotesize Захаров} & & & & \multicolumn{5}{|c|}{\textit{гр.\,821702}} \\ \cline{1-5}
+\textit{\footnotesize Захаров} & & & & \multicolumn{5}{|c|}{\textit{гр.\,221701}} \\ \cline{1-5}
+
+\multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Реценз.}} &
+\textit{\footnotesize} & & & & \multicolumn{5}{|c|}{} \\ \cline{1-5}
 
 \multicolumn{2}{|p{35pt}|}{\textit{\footnotesize Утв.}} &
 \textit{\footnotesize Шункевич} & & & & \multicolumn{5}{|c|}{} \\ \hline
 \end{tabular}%
 }
 
-% Страница: 3 штампа по вертикали с равными промежутками.
-\newcommand{\stamppage}{%
+% Страница: 3 штампа по вертикали для одного материала.
+% #1 - Обозначение
+% #2 - Название
+\newcommand{\stamppage}[2]{%
     \null\vfill
-    \begin{center}\trmstamp\end{center}
+    \begin{center}\trmstamp{#1}{#2}\end{center}
     \vfill
-    \begin{center}\trmstamp\end{center}
+    \begin{center}\trmstamp{#1}{#2}\end{center}
     \vfill
-    \begin{center}\trmstamp\end{center}
+    \begin{center}\trmstamp{#1}{#2}\end{center}
     \vfill\null
     \clearpage
 }
 
 \begin{document}
 
-\stamppage
-\stamppage
+\null\vfill
+
+% 1. Диаграмма вариантов использования
+\begin{center}\trmstamp{ГУИР.21702-01 90 01-1}{Диаграмма вариантов использования}\end{center}
+
+% 2. Диаграмма компонентов системы
+\begin{center}\trmstamp{ГУИР.21702-01 90 02-1}{Диаграмма компонентов системы}\end{center}
+
+% 3. Диаграмма последовательности обработки события
+\begin{center}\trmstamp{ГУИР.21702-01 90 03-1}{Диаграмма последовательности обработки события}\end{center}
+
+
+\clearpage
+
+% 4. Алгоритм работы модуля интеллектуального анализа событий
+\begin{center}\trmstamp{ГУИР.21702-01 90 04-1}{Алгоритм работы модуля интеллектуального анализа событий}\end{center}
+
+% 5. Диаграмма классов системы
+\begin{center}\trmstamp{ГУИР.21702-01 90 05-1}{Диаграмма классов системы}\end{center}
+
+% 6. Главное окно пользовательского интерфейса
+\begin{center}\trmstamp{ГУИР.21702-01 90 06-1}{Главное окно пользовательского интерфейса}\end{center}
 
 \end{document}

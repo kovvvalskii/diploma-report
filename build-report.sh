@@ -15,6 +15,7 @@ cd tex-generator &&
 
 cd ../report &&
 latexmk -pdf -f -interaction=nonstopmode diploma/diploma_report.tex
+latexmk -pdf -f -interaction=nonstopmode diploma/only.tex
 
 cd ..
 

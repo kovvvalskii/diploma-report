@@ -1,95 +1,73 @@
 @startuml deployment_diagramm
-' Используем направление сверху вниз
-top to bottom direction
+left to right direction
 
-' Настройки стилей
-skinparam defaultFontSize 20
-skinparam defaultFontName "Verdana"
-skinparam linetype ortho
-
-' Отступы
-skinparam nodesep 60
-skinparam ranksep 80
-skinparam padding 10
-
-' Цвета
 skinparam monochrome true
 skinparam shadowing false
-skinparam BackgroundColor white
+skinparam defaultFontName "Verdana"
+skinparam defaultFontSize 24
+skinparam nodesep 100
 
-' === 1. ВНЕШНИЙ УРОВЕНЬ ===
-node "User Smartphone" as us {
-    component [Mobile App] as Mobile
+' Принудительный белый фон
+skinparam NodeBackgroundColor white
+skinparam ComponentBackgroundColor white
+skinparam DatabaseBackgroundColor white
+skinparam CloudBackgroundColor white
+
+skinparam NodeBorderColor black
+skinparam ComponentBorderColor black
+skinparam DatabaseBorderColor black
+skinparam CloudBorderColor black
+
+' === ВНЕШНИЕ УЗЛЫ И КЛИЕНТЫ ===
+
+node "User Device" {
+    component [Browser] as Browser
 }
 
-cloud "External Sources" as es {
-    component [GDELT Project] as GDELT
-    component [News Media / APIs] as News
-    GDELT -[hidden]right- News
+cloud "External Sources" {
+    [GDELT Project] as GDELT
+    [News Media / APIs] as News
 }
 
-us -[hidden]right- es
+' === ТВОЯ СЕРВЕРНАЯ ИНФРАСТРУКТУРА (РАЗДЕЛЬНЫЕ СЕРВЕРЫ) ===
 
-
-' === 2. ИНФРАСТРУКТУРА ===
-node "Cloud Infrastructure / Server" {
-    node "Docker Compose / K8s Cluster" {
-        
-        ' ЛЕВАЯ КОЛОНКА
-        node "Web Tier" as web {
-            component [Nginx (Reverse Proxy)] as Nginx
-        }
-        
-        node "Application Tier (Java)" as app {
-            component [Core Service] as Core
-        }
-        
-        node "Database Tier" as db_tier {
-            database "PostgreSQL + PostGIS" as DB
-        }
-
-        ' ПРАВАЯ КОЛОНКА
-        node "AI Tier (Python)" as ai {
-            component [Fetcher Service] as Fetcher
-            component [Analyzer Service] as Analyzer
-            component [Ollama (Local LLM)] as Ollama
-            
-            Fetcher -[hidden]right- Analyzer
-            Analyzer -[hidden]right- Ollama
-        }
-        
-        node "Message Broker" as mb {
-            component [RabbitMQ] as RMQ
-        }
-
-        ' Сетка
-        web -[hidden]right- ai
-        app -[hidden]right- mb
-        
-        web -[hidden]down- app
-        app -[hidden]down- db_tier
-        
-        ai -[hidden]down- mb
-    }
+node "Web Server" {
+    component [Nginx] as Nginx
 }
 
-' === 3. СВЯЗИ ===
+node "Analytics Server" {
+    component [Fetcher] as Fetcher
+    component [Analyzer] as Analyzer
+}
 
-' Добавляем \n для отступа текста от самих линий
-Mobile ---> Nginx : "\nHTTPS / REST\n"
-Nginx ---> Core : "\nReverse Proxy\n"
-Core ---> DB : "\nJDBC / Spatial\n"
+node "Ollama Server" {
+    component [Ollama (Local LLM)] as Ollama
+}
 
-GDELT ---> Fetcher : "\nHTTP\n"
-News ---> Analyzer : "\nScraping\n"
+node "Backend Server" {
+    component [Backend] as Backend
+}
 
-' ИСПРАВЛЕНИЕ ЗДЕСЬ: Удлиняем стрелку (-right->) и добавляем \n, чтобы текст не наезжал
-Analyzer -right-> Ollama : "\nLocal API\n"
+node "Message Broker Server" {
+    component [RabbitMQ] as RMQ
+}
 
-Fetcher ---> RMQ : "\nAMQP\n"
-Analyzer ---> RMQ : "\nAMQP\n"
+node "Database Server" {
+    database "PostgreSQL + PostGIS" as DB
+}
 
-' Связь между колонками
-Core -> RMQ : "\nAMQP\n"
+
+Browser --> Nginx : HTTP / HTTPS
+GDELT --> Fetcher : HTTP / FTP
+News --> Fetcher : HTTP API
+
+Nginx ---> Backend : HTTP
+Analyzer --> Ollama : HTTP
+
+Fetcher ---> RMQ : AMQP
+Analyzer ---> RMQ : AMQP
+Analyzer ---> Backend : HTTP
+
+Backend ---> DB : TCP
 
 @enduml

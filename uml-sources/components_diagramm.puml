@@ -32,7 +32,6 @@ queue "Очередь сообщений" as RMQ
 [Модуль анализа] as Analyzer
 [Локальная LLM] as Ollama
 [Локальная модель перевода] as Translator
-[Локальная модель реферирования] as Summarizer
 
 ' Хранение и UI (Нижний уровень)
 [Серверная часть приложения] as Core
@@ -50,8 +49,7 @@ Fetcher --> RMQ : ID событий
 RMQ --> Analyzer : Получение ID
 Analyzer -left-> SDB : Чтение данных
 Analyzer --> Translator : Перевод полей
-Analyzer -right-> Summarizer : Реферирование
-Summarizer --> Ollama : Инференс LLM
+Analyzer -right-> Ollama : Инференс LLM
 Analyzer --> Core : Обработанные события
 
 ' 3. Хранение и отображение

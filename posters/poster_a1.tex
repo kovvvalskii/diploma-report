@@ -42,13 +42,67 @@
     \clearpage
 }
 
+% \posterfour{<заголовок плаката>}
+%            {<файл 1>}{<подпись 1>}{<файл 2>}{<подпись 2>}
+%            {<файл 3>}{<подпись 3>}{<файл 4>}{<подпись 4>}
+\newcommand{\posterfour}[9]{%
+    \noindent
+    % Внешний контейнер на всю высоту и ширину печатной области
+    \begin{minipage}[t][\textheight]{\textwidth}
+        \centering
+        % Заголовок плаката
+        {\fontsize{56pt}{64pt}\selectfont\bfseries\sffamily #1\par}
+        \vfill % Автоматический отступ от заголовка до первого ряда
+        
+        % --- ПЕРВЫЙ РЯД КАРТИНОК ---
+        \begin{minipage}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth,height=0.34\textheight,keepaspectratio]{#2}\\
+            \vspace{5mm}
+            {\fontsize{24pt}{28pt}\selectfont\sffamily #3}
+        \end{minipage}%
+        \hfill % Расталкивает левую и правую колонку по краям
+        \begin{minipage}[b]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth,height=0.34\textheight,keepaspectratio]{#4}\\
+            \vspace{5mm}
+            {\fontsize{24pt}{28pt}\selectfont\sffamily #5}
+        \end{minipage}
+        
+        \vfill % Автоматический вертикальный spacer между рядами
+        
+        % --- ВТОРОЙ РЯД КАРТИНОК ---
+        \begin{minipage}[t]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth,height=0.34\textheight,keepaspectratio]{#6}\\
+            \vspace{5mm}
+            {\fontsize{24pt}{28pt}\selectfont\sffamily #7}
+        \end{minipage}%
+        \hfill
+        \begin{minipage}[t]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth,height=0.34\textheight,keepaspectratio]{#8}\\
+            \vspace{5mm}
+            {\fontsize{24pt}{28pt}\selectfont\sffamily #9}
+        \end{minipage}
+        \vfill % Чтобы снизу до края листа тоже оставался баланс пространства
+    \end{minipage}%
+    \clearpage
+}
+
 \begin{document}
 
-\poster{Диаграмма вариантов использования}{use_case_diagramm}
 \poster{Диаграмма компонентов системы}{components_diagramm}
+\poster{Диаграмма развертывания систем}{deployment_diagramm}
 \poster{Диаграмма последовательности обработки события}{seq_diagramm}
 \poster{Алгоритм работы модуля интеллектуального анализа событий}{analyzer_flow}
 \poster{Диаграмма классов системы}{class_diagramm}
-\poster{Главное окно пользовательского интерфейса}{main_map_interface}
+
+% Последний плакат с 4 картинками сеткой 2х2
+\posterfour{Пользовательский интерфейс}% Заголовок
+    {main_map_interface}{Главное окно пользовательского интерфейса}
+    {event_page_ru}{Страница события}
+    {route_planning_step2_schedule}{Мастер прокладки маршрута}
+    {email_notification}{Содержимое почтовых уведомлений}
 
 \end{document}
