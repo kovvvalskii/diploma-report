@@ -20,7 +20,6 @@ skinparam ParticipantBorderColor black
 skinparam DatabaseBorderColor black
 skinparam QueueBorderColor black
 skinparam ActorBorderColor black
-skinparam ParticipantPadding 20
 
 ' Убираем серый фон у разделителей групп (== Сбор данных ==)
 skinparam SequenceDividerBackgroundColor white
@@ -32,21 +31,18 @@ skinparam ParticipantPadding 80
 
 participant "GDELT" as G
 participant "Модуль сбора\nданных" as F
-database "Промежуточная\nБД" as SDB
 queue "RabbitMQ" as RMQ
 participant "Модуль\nанализа" as A
 participant "Серверная часть\nприложения" as C
-database "Основная БД\n" as CDB
+database "PostgreSQL\n" as CDB
 actor "Пользователь\n" as U
 
 == Сбор данных ==
 G -> F : CSV-архив GDELT
-F -> SDB : Сохранение необработанных\nсобытий и упоминаний
-F -> RMQ : Публикация пакета ID\n
+F -> RMQ : Публикация пакета\nданных событий
 
 == Анализ данных ==
-RMQ -> A : Получение пакета ID\n
-A -> SDB : Извлечение необработанных данных
+RMQ -> A : Получение пакета\nданных событий
 A -> A : Классификация
 A -> A : Геопарсинг
 A -> A : Генерация описания

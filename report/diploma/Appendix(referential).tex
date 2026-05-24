@@ -1,16 +1,22 @@
-\newgeometry{left=1.5cm,top=2.0cm,right=1.5cm,bottom=2.7cm}
+\newgeometry{left=1cm,top=1cm,right=1cm,bottom=1cm} 
+\begin{landscape} 
 \pagestyle{empty}
+\thispagestyle{empty}
+
+% Верхняя "пружина", которая толкает содержимое вниз к центру
+\vspace*{\fill}
+
 \begin{center}
-%\textbf{\Large{
-%    ПРИЛОЖЕНИЕ А\\}
-%    \large{(справочное)}}
+    % Вставляем первую страницу
+    \includegraphics[page=1, width=0.45\linewidth, keepaspectratio]{picture/antiplagius.pdf}%
+    % ГОРИЗОНТАЛЬНЫЙ отступ (в твоем коде был \vspace, что ломало высоту)
+    \hspace{1cm}%
+    % Вставляем вторую страницу
+    \includegraphics[page=2, width=0.45\linewidth, keepaspectratio]{picture/antiplagius.pdf}
 \end{center}
 
-\hskip-2em
+% Нижняя "пружина", которая толкает содержимое вверх к центру
+\vspace*{\fill}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1\linewidth, angle=90]{picture/bypass-short-report-print-private.png}
-%    \caption{Enter Caption}
-    \label{fig:enter-label}
-\end{figure}
+\end{landscape}
+\restoregeometry

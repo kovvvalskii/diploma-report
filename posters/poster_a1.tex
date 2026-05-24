@@ -32,16 +32,18 @@
 
 % \poster{<заголовок плаката>}{<имя файла без расширения>}
 \newcommand{\poster}[2]{%
-    \noindent
+    \clearpage % Гарантирует, что мы начинаем с чистого листа
+    \vspace*{\fill} % Пружина сверху (работает даже в начале страницы благодаря звездочке)
+    \nopagebreak
     \begin{minipage}{\textwidth}
         \centering
         {\fontsize{56pt}{64pt}\selectfont\bfseries\sffamily #1\par}
-        \vspace{18mm}
-        \includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{#2}
+        \vspace{25mm} % Отступ между заголовком и графиком
+        \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{#2}
     \end{minipage}%
-    \clearpage
+    \nopagebreak
+    \vspace*{\fill} % Пружина снизу
 }
-
 % \posterfour{<заголовок плаката>}
 %            {<файл 1>}{<подпись 1>}{<файл 2>}{<подпись 2>}
 %            {<файл 3>}{<подпись 3>}{<файл 4>}{<подпись 4>}
@@ -93,7 +95,7 @@
 \begin{document}
 
 \poster{Диаграмма компонентов системы}{components_diagramm}
-\poster{Диаграмма развертывания систем}{deployment_diagramm}
+\poster{Диаграмма развертывания системы}{deployment_diagramm}
 \poster{Диаграмма последовательности обработки события}{seq_diagramm}
 \poster{Алгоритм работы модуля интеллектуального анализа событий}{analyzer_flow}
 \poster{Диаграмма классов системы}{class_diagramm}

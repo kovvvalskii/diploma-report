@@ -14,8 +14,8 @@ cd tex-generator &&
 ./economics.py > ../report/sections/sec_economics.tex &&
 
 cd ../report &&
-latexmk -pdf -f -interaction=nonstopmode diploma/diploma_report.tex
-latexmk -pdf -f -interaction=nonstopmode diploma/only.tex
+latexmk -pdf -f -g -interaction=nonstopmode diploma/diploma_report.tex
+#latexmk -pdf -f -interaction=nonstopmode diploma/only.tex
 
 cd ..
 

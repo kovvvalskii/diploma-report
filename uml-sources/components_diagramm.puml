@@ -25,7 +25,6 @@ skinparam ranksep 80
 ' Источники и сбор (Верхний уровень)
 [Источник событий] as GDELT
 [Модуль сбора данных] as Fetcher
-database "Промежуточная БД" as SDB
 
 ' Очередь и логика (Средний уровень)
 queue "Очередь сообщений" as RMQ
@@ -35,21 +34,19 @@ queue "Очередь сообщений" as RMQ
 
 ' Хранение и UI (Нижний уровень)
 [Серверная часть приложения] as Core
-database "Основная БД" as CDB
+database "База данных" as CDB
 [Пользовательский интерфейс] as Web
 
 ' --- СВЯЗИ ---
 
 ' 1. Сбор данных
 GDELT --> Fetcher : CSV-архивы
-Fetcher --> SDB : Сохранение данных
-Fetcher --> RMQ : ID событий
+Fetcher --> RMQ : Данные событий
 
 ' 2. Анализ данных
-RMQ --> Analyzer : Получение ID
-Analyzer -left-> SDB : Чтение данных
+RMQ --> Analyzer : Получение данных
 Analyzer --> Translator : Перевод полей
-Analyzer -right-> Ollama : Инференс LLM
+Analyzer -right-> Ollama : Генерация текста
 Analyzer --> Core : Обработанные события
 
 ' 3. Хранение и отображение
